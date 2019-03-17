@@ -1,6 +1,5 @@
 import psycopg2
 import numpy
-import tqdm # REMEMBER TO CHECK
 from spellchecker import SpellChecker # TODO ADD SHIT
 import pandas as pd # REMEMBER TO CHECK
 import pandas.io.sql as sqlio # REMEMBER TO CHECK
@@ -9,6 +8,10 @@ import random
 import math
 
 ##### LEGACY #####
+
+# These functions were used in previous versions,
+# and as of right now are unused; they could however
+# be useful in the future.
 
 def filter_unmatched_stint(stint):
     """
@@ -605,9 +608,9 @@ def algorithm(conn, stint_id,n_max=4):
         final_list (list) = List of five student id's to assing to the stint
     """
     
-                                ##################################################
-                                # Use the flow diagram to follow algorithm logic #
-                                ##################################################
+                                        ##################################################
+                                        # Use the flow diagram to follow algorithm logic #
+                                        ##################################################
     
     ####################################################### Preliminary #######################################################
     
@@ -664,9 +667,8 @@ def algorithm(conn, stint_id,n_max=4):
                     final_list.append(random_student_id)
                     break
     
-    ########## WORKED TOGETHER ###############
+    ########################################################## Check if they worked together ###########################################################
     
-
     temp_list = []
     for obj in student_av:### CHECK IF STUDENT(S) HAS(HAVE) WORKED WITH BUSINESS BEFORE
         stint_connection = stint_student_business(conn, business_id, obj['student_id'])
@@ -690,11 +692,10 @@ def algorithm(conn, stint_id,n_max=4):
     except:
         pass
 
-    ########## ENSURING AT LEAST OF 5 ############
+    ############################################ Ensuring max number 'n_max' of elements in final list ####################################################
 
 
     final_list = desirability_match(conn, business_level, desirability_list, final_list)
-    
     
     for i in range(3):
         if len(final_list)<n_max:
