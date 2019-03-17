@@ -617,8 +617,8 @@ def algorithm(conn, stint_id,n_max=4):
     final_list = [] #list of the final five ID
     
     sql_command = "SELECT type,business_id FROM storm_stint WHERE id='{}' AND student_id IS NOT NULL;".format(stint_id)
-    cursor = conn.cursor()
-    cursor.execute(sql_command)
+    cursor = conn.cursor() 
+    cursor.execute(sql_command) 
     
     for cursor_element in cursor:
         stint_type = cursor_element[0] ## Fetching type of stint
@@ -728,7 +728,7 @@ def algorithm(conn, stint_id,n_max=4):
 
 ##### MAIN #####
 
-def main(*,stint_id=None):
+def main(stint_id=None):
     """
     Main function. Can also be imported and used in another file (specifying 'stint_id')
     In:
@@ -750,21 +750,12 @@ def main(*,stint_id=None):
     #  iter over them as you need/please.           #
     #                                               #
     ##### Function can be customized above here #####
-
-    sql_query = "SELECT id, type FROM storm_stint;"
-    cursor = conn.cursor()
-    cursor.execute(sql_query)
-    #for obj in cursor:
-    #    avail_std = filter_available_students(conn, obj[0])
-    #    type_stint = obj[1]
-    #    for item in avail_std:
-    #        desirability(conn,item['student_id'],item['student_av_id'], obj[1], obj[0])
     
     final = algorithm(conn, stint_id)
+    print(final)
 
     conn = None
-
-    return final
     
-if __name__ == '__main__':
-    main()
+    return final
+
+main(stint_id=7666)
