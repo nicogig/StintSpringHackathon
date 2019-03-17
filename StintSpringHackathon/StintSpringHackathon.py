@@ -90,13 +90,13 @@ def filter_available_students(conn, stint_id):
     Out:
         students_available (dict) = dict containing student and availability id's (for a stint) 
     """
-    suitable_students = filter_suitable(conn)
+    suitable_students = filter_suitable(conn) # Invoke filter_suitable() to fetch all students able to work.
     students_available = []
     sql_command = "SELECT date_from, date_to FROM storm_stint WHERE id='{}';".format(stint_id)
     cursor_date_stint = conn.cursor()
     cursor_date_stint.execute(sql_command)
 
-    for object_time in cursor_date_stint:
+    for object_time in cursor_date_stint: 
         date_from_stint = object_time[0]
         date_to_stint = object_time[1]
 
@@ -108,7 +108,7 @@ def filter_available_students(conn, stint_id):
             date_from_student = object_time[0]
             date_to_student = object_time[1]
             student_av_id = object_time[2]
-            if date_from_student <= date_from_stint and date_to_student >= date_from_stint:
+            if date_from_student <= date_from_stint and date_to_student >= date_from_stint: # Filter out the students whose availability does not coincide
                 students_available.append({'student_id':student_id,'student_av_id':student_av_id})
 
     return students_available
@@ -427,7 +427,7 @@ def duration_and_distance(conn, stint_id, student_av_id):
     except OverflowError:
         pass
 
-##### WORD PROCESSING #####
+##### WORD PROCESSING ##### not used yet
 
 def list_raw_types(conn):
     """
@@ -446,6 +446,38 @@ def list_raw_types(conn):
         if raw_type[0] not in raw_types:
             raw_types.append(raw_type[0])
     return raw_types
+    
+def compare_with_known_jobs(known_jobs, compare_string):
+    
+    """
+    
+    Rudimentary SpellChecker to compare a string to known, verified Jobs available in STINT.
+
+    In:
+        known_jobs (list) = A list of all verified jobs.
+        compare_string (string) = The manually entered job to compare.
+    Out:
+        None if job is in list;
+        candidates (dict) = A list of all possible words with similar spelling.
+    """
+    
+    
+    spell = SpellChecker()
+    known = 0
+    for item in known_jobs:
+            if compare_string == item:
+                    known = 1
+    
+    if known == 1:
+            return None
+    else:
+        wrong = spell.unknown([compare_string])
+        for word in wrong:
+                candidates = spell.candidates(word)
+                if candidates != None:
+                        return candidates
+                else:
+                        return None
 
 ##### NORMALIZATION #####
 
@@ -502,14 +534,14 @@ def desirability(conn,student_id,student_av_id, stint_type,stint_id):
 
     grade_type_normalized, grade_general_normalized, experience_type_normalized, experience_general_normalized, distance_time_normalized = tuple(des_values)
 
-    desirability_value = (3*grade_type_normalized + 3*experience_type_normalized + 2*grade_general_normalized + 1*distance_time_normalized)*experience_general_normalized/9
+    desirability_value = ((3*grade_type_normalized + 3*experience_type_normalized + 2*grade_general_normalized + 1*distance_time_normalized)/9)*experience_general_normalized
 
 
     desirability = {'student_id': student_id, 'desirability':desirability_value}
     
     return desirability
 
-def desirability_match(conn, business_level, desirability_list, final_list,n_max=5):
+def desirability_match(conn, business_level, desirability_list, final_list,n_max=4):
     """
     Matches student id's, according to desirability, to a business, according to its level.
     In:
@@ -517,7 +549,7 @@ def desirability_match(conn, business_level, desirability_list, final_list,n_max
         business_level (int) = Level of business
         desirability_list (list) = List of dicts of desirabilities and students id's
         stint_type (string) = Type of stint
-        n_max (int) = Maximum number of stints assignable to a business
+        n_max (int) = Maximum number of stints assignable to a business. Default: 4
     Out:
         final_list (list) = List of final id's to assign to a stint
     """
@@ -529,7 +561,7 @@ def desirability_match(conn, business_level, desirability_list, final_list,n_max
     
     if business_level == 4 or business_level == 5:
         for i in range(len(desirability_list)):
-            if 0.75*desirability_max<=desirability_list[i]['desirability']:    ##PLACEHOLDER, CHANGE THIS VALUES
+            if 0.75*desirability_max<=desirability_list[i]['desirability']: #the float value can be changed (0.75)
                 if len(final_list) <= n_max:
                     final_list.append(desirability_list[i])
                 else:
@@ -537,7 +569,7 @@ def desirability_match(conn, business_level, desirability_list, final_list,n_max
 
     elif business_level == 3:
         for i in range(len(desirability_list)):
-            if 0.5*desirability_max<=desirability_list[i]['desirability']<0.75*desirability_max:    ##PLACEHOLDER, CHANGE THIS VALUES
+            if 0.5*desirability_max<=desirability_list[i]['desirability']<0.75*desirability_max: #the float values can be changed (0.75,0.50)
                 if len(final_list) <= n_max:
                     final_list.append(desirability_list[i])
                 else:
@@ -545,14 +577,14 @@ def desirability_match(conn, business_level, desirability_list, final_list,n_max
                 
     elif business_level == 2:
         for i in range(len(desirability_list)):
-            if 0.25*desirability_max<=desirability_list[i]['desirability']<0.5*desirability_max:    ##PLACEHOLDER, CHANGE THIS VALUES
+            if 0.25*desirability_max<=desirability_list[i]['desirability']<0.5*desirability_max: #the float values can be changed (0.50,0.25)
                 if len(final_list) <= n_max:
                     final_list.append(desirability_list[i])
                 else:
                     break
     else:
         for i in range(len(desirability_list)):
-            if desirability_list[i]['desirability']<0.25*desirability_max:    ##PLACEHOLDER, CHANGE THIS VALUES
+            if desirability_list[i]['desirability']<0.25*desirability_max: #the float value can be changed (0.25)
                 if len(final_list) <= n_max:
                     final_list.append(desirability_list[i])
                 else:
@@ -562,17 +594,24 @@ def desirability_match(conn, business_level, desirability_list, final_list,n_max
 
 ##### ALGORITHM #####
 
-def algorithm(conn, stint_id,n_max=5):
+def algorithm(conn, stint_id,n_max=4):
     """
     Implementing the algorithm.
     In:
         conn (connection) = Connection to SQL
         stint_id (int) = id of stint
-        n_max (int) = Max number of stints assigned to a business. Default: 5
+        n_max (int) = Max number of stints assigned to a business. Default: 4
     Out:
         final_list (list) = List of five student id's to assing to the stint
     """
-    final_list = []
+    
+                                ##################################################
+                                # Use the flow diagram to follow algorithm logic #
+                                ##################################################
+    
+    ####################################################### Preliminary #######################################################
+    
+    final_list = [] #list of the final five ID
     
     sql_command = "SELECT type,business_id FROM storm_stint WHERE id='{}' AND student_id IS NOT NULL;".format(stint_id)
     cursor = conn.cursor()
@@ -582,7 +621,7 @@ def algorithm(conn, stint_id,n_max=5):
         stint_type = cursor_element[0] ## Fetching type of stint
         business_id = cursor_element[1] ## Fetching ID of business
 
-    student_av = filter_available_students(conn,stint_id)
+    student_av = filter_available_students(conn,stint_id) # Gets students available for the stint
     
     sql_command = "SELECT ref FROM storm_business WHERE id='{}';".format(business_id)
     cursor_ref = conn.cursor()
@@ -595,19 +634,22 @@ def algorithm(conn, stint_id,n_max=5):
     cursor_level.execute(sql_command)
     for cursor_element_level in cursor_level:
         business_level = cursor_element_level[0] ## Fetching level of business (STINT Ranking)
- 
+    
+    ##################################################  Treat special business cases ###################################################
+    
     if no_stints_business(conn, business_id)['number_of_stints'] < 5:
         business_level = 4 # MAKES IT SO THAT BEGINNER BUSINESSES GET THE BEST TREATMENT POSSIBLE
-    elif business_level == None:
+    if business_level == None:
         business_level = 3 # MAKES IT SO THAT 'UNLABELLED' BUSINESSES GET TREATED AS AN AVERAGE BUSINESS
+
+    ############################################### Calculation of the list of desirabilities ###########################################
 
     desirability_list = [] ## To be populated by algorithm. This list is the one with the potential choices in the end
     
-    for obj in student_av:
-        #for (student_id, student_av_id) in zip(student_av[i]['student_id'], student_av[i]['student_av_id']):
+    for obj in student_av: # Adds 'desirability dicts' to the 'desirability_list'
         desirability_list.append(desirability(conn,obj['student_id'],obj['student_av_id'],stint_type,stint_id))
     
-    desirability_list = sorted(desirability_list,key=lambda k: k['desirability'])
+    desirability_list = sorted(desirability_list,key=lambda k: k['desirability'],reverse=True) # Sorts desirability list
 
     if business_level == 3:
         chosen_students = []
@@ -685,82 +727,43 @@ def algorithm(conn, stint_id,n_max=5):
 
 ##### MAIN #####
 
-def main():
+def main(*,stint_id=None):
     """
-    Main function.
+    Main function. Can also be imported and used in another file (specifying 'stint_id')
+    In:
+        stint_id (int) = id of stint. Optional value to add when calling the function
+    Out:
+        final (list) = List of student id's for the stint
     """
-    conn = psycopg2.connect("host=localhost port=5432 dbname=hackathon user=postgres password=habbothink11") #Remember to change this to bogus values
+    conn = psycopg2.connect("host=localhost port=5432 dbname=hackathon user=postgres password=habbothink11") # Remember to change this the right values
 
-    dats = []
-    for sql in ["storm_stint","storm_business","storm_review","storm_studentavailability"]:
-        dats.append(sqlio.read_sql_query("SELECT * from {}".format(sql),conn))
+    ##### Function can be customized under here #####
+    #                                               #
+    #  As is it right now, the function needs to be #
+    #  called with a specified stint_id, for ease   #
+    #  of use as an importable function, like this: #
+    #  main(stint_id=<DESIDERED_STINT_ID>), with    #
+    #  your desired id (int).                       #
+    #  To use as standalone, just either define a   #
+    #  variable 'stint_id' with the wanted id, or   #
+    #  iter over them as you need/please.           #
+    #                                               #
+    ##### Function can be customized above here #####
 
-
+    sql_query = "SELECT id, type FROM storm_stint;"
+    cursor = conn.cursor()
+    cursor.execute(sql_query)
+    #for obj in cursor:
+    #    avail_std = filter_available_students(conn, obj[0])
+    #    type_stint = obj[1]
+    #    for item in avail_std:
+    #        desirability(conn,item['student_id'],item['student_av_id'], obj[1], obj[0])
     
-    stint,business,review,studentav = dats
-
-    stint_unmatched,stint_matched = filter_unmatched_stint(stint)
-
-    #print(filter_available_students(stint.loc[4269],studentav))
-    #print(list_raw_types(conn))
-    #print(same_type_stint_business(conn, 17, list_raw_types(conn)))
-    #print(no_stints_business(conn, 17))
-    #print(no_stints_student(conn, 17))
-    #print(no_stints_student_business(conn, 17, 1636))
-    #print(average_business_rating(conn, 17))
-    #print(average_business_type_rating(conn, 17, list_raw_types(conn)))
-    #print(distance(conn, 4, 3))
-    #aaaaaaaaaaaaaaaaaa = no_of_stints_in_business(conn, 17, 1636)
-    #print(aaaaaaaaaaaaaaaaaa)
-    #print(stint_unmatched)
-    #print(same_type_stint_business(conn, 17, 'Customer Service'))
-    #print(grade_student(conn, 12))
-    #print(filter_available_students(conn,4269))
-    #print(grade_student(conn, 12))
-    #print(average_business_type_rating(conn,17,'Customer Service'))
-    #print(delta_grade_student_type(conn,12,'Waiting'))
-    #print(filter_unsuitable(conn))
-    #print(filter_available_students(conn, 3651))
-    #print(duration_and_distance(conn, 17, student_av_id))
-    #avail_std = []
-    #std_id = []
-    #suitable_students = filter_suitable(conn)
-    #sql_query = "SELECT student_id, id FROM storm_studentavailability;"
-    #cursor = conn.cursor()
-    #cursor.execute(sql_query)
-    #for object_cur in cursor:
-    #    std_id.append(object_cur[0])
-    #    avail_std.append(object_cur[1])
-
-    #available_ids = filter_available_students(conn,7666)
-
-    #f = open('Desirability.txt', 'w+')
-    #for obj_av in available_ids:
-    #    a = desirability(conn, obj_av['student_id'], obj_av['student_av_id'], 'Waiter/Waitress', 7666)['desirability']
-    #    print(a)
-    #    f.write(str(a))
-    #    f.write('\n')
-    sql_query = "SELECT id FROM storm_stint;"
-    cursor_two = conn.cursor()
-    cursor_two.execute(sql_query)
-    list_stint_id = []
-    for obj in cursor_two:
-        list_stint_id.append(obj[0])
-
-    for item in list_stint_id:
-        final = algorithm(conn, item)
-        for list_id in final['final_list_id']:
-
-            student_id = list_id['student_id']
-            print(no_stints_student(conn,student_id))
-        print(final)
-    #for stud in final:
-    #    print(no_stints_student(conn,stud['student_id'])
-    
-    #f.close()
-
+    final = algorithm(conn, stint_id)
 
     conn = None
+
+    return final
     
 if __name__ == '__main__':
     main()
